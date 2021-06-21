@@ -1,4 +1,4 @@
-# Disco
+# Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning
 
 ***
 
@@ -23,7 +23,7 @@ Before running, we firstly move all data into share memory
 cp /path/to/ImageNet /dev/shm
 ```
 
-### Pretrain Model, 
+### Pretrain Model
 
 For pretraining baseline models with default hidden layer dimension in **Tab1** 
 
