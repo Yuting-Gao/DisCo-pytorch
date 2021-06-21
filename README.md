@@ -1,146 +1,274 @@
-## MoCo: Momentum Contrast for Unsupervised Visual Representation Learning
+# Disco
 
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/11435359/71603927-0ca98d00-2b14-11ea-9fd8-10d984a2de45.png" width="300">
-</p>
+***
 
-This is a PyTorch implementation of the [MoCo paper](https://arxiv.org/abs/1911.05722):
+Pytorch Implementation for [DisCo: Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning](https://arxiv.org/abs/2104.09124)
+
+
+
+## Requirements
+
+* Python3
+* Pytorch 1.6+
+* Detectron2
+
+* 8 GPUs are preferred
+* ImageNet, Cifar10/100, VOC, COCO
+
+## Run
+
+Before running, we firstly move all data into share memory
+
 ```
-@Article{he2019moco,
-  author  = {Kaiming He and Haoqi Fan and Yuxin Wu and Saining Xie and Ross Girshick},
-  title   = {Momentum Contrast for Unsupervised Visual Representation Learning},
-  journal = {arXiv preprint arXiv:1911.05722},
-  year    = {2019},
-}
-```
-It also includes the implementation of the [MoCo v2 paper](https://arxiv.org/abs/2003.04297):
-```
-@Article{chen2020mocov2,
-  author  = {Xinlei Chen and Haoqi Fan and Ross Girshick and Kaiming He},
-  title   = {Improved Baselines with Momentum Contrastive Learning},
-  journal = {arXiv preprint arXiv:2003.04297},
-  year    = {2020},
-}
-```
-
-
-### Preparation
-
-Install PyTorch and ImageNet dataset following the [official PyTorch ImageNet training code](https://github.com/pytorch/examples/tree/master/imagenet).
-
-This repo aims to be minimal modifications on that code. Check the modifications by:
-```
-diff main_moco.py <(curl https://raw.githubusercontent.com/pytorch/examples/master/imagenet/main.py)
-diff main_lincls.py <(curl https://raw.githubusercontent.com/pytorch/examples/master/imagenet/main.py)
+cp /path/to/ImageNet /dev/shm
 ```
 
+### Pretrain Model, 
 
-### Unsupervised Training
+For pretraining baseline models with default hidden layer dimension in **Tab1** 
 
-This implementation only supports **multi-gpu**, **DistributedDataParallel** training, which is faster and simpler; single-gpu or DataParallel training is not supported.
+```Python
+# Switch to moco directory
+cd moco
 
-To do unsupervised pre-training of a ResNet-50 model on ImageNet in an 8-gpu machine, run:
+# R-50
+python3 -u main_moco.py -a resnet50 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --hidden 2048 /dev/shm/ 2>&1 | tee ./logs/std.log
+python3 main_lincls.py -a resnet50 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+
+# R-101
+python3 -u main_moco.py -a resnet101 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --hidden 2048 /dev/shm/ 2>&1 | tee ./logs/std.log
+python3 main_lincls.py -a resnet101 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+
+# R-152
+python3 -u main_moco.py -a resnet152 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 800 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --hidden 2048 /dev/shm/ 2>&1 | tee ./logs/std.log
+python3 main_lincls.py -a resnet152 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0799.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+
+# Mob
+python3 -u main_moco.py -a mobilenetv3 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --hidden 512 /dev/shm 2>&1 |  tee ./logs/std.log
+#          Evaluation
+python3 main_lincls.py -a mobilenetv3 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+
+# Effi-B0
+python3 -u main_moco.py -a efficientb0 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --hidden 1280 2>&1  |  tee ./logs/std.log
+#          Evaluation
+python3 main_lincls.py -a efficientb0 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+
+# Effi-B1
+python3 -u main_moco.py -a efficientb1 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0  --hidden 1280  /dev/shm  2>&1 | tee ./logs/std.log
+#          Evaluation
+python3 main_lincls.py -a efficientb1 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+
+# R-18
+python3 -u main_moco.py -a resnet18 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --hidden 1280 /dev/shm/ 2>&1 | tee ./logs/std.log
+#          Evaluation
+python3 main_lincls.py -a resnet18 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+
+# R-34
+python3 -u main_moco.py -a resnet34 --batch-size 256 --learning-rate 0.03 --mlp --moco-t 0.2 --aug-plus --cos --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --hidden 1280 /dev/shm/ 2>&1 | tee ./logs/std.log
+#          Evaluation
+python3 main_lincls.py -a resnet34 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
 ```
-python main_moco.py \
-  -a resnet50 \
-  --lr 0.03 \
-  --batch-size 256 \
-  --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
-  [your imagenet-folder with train and val folders]
-```
-This script uses all the default hyper-parameters as described in the MoCo v1 paper. To run MoCo v2, set `--mlp --moco-t 0.2 --aug-plus --cos`.
 
-***Note***: for 4-gpu training, we recommend following the [linear lr scaling recipe](https://arxiv.org/abs/1706.02677): `--lr 0.015 --batch-size 128` with 4 gpus. We got similar results using this setting.
+### DisCo 
 
+For training DisCo in **Tab1**, Comparision with baseline
 
-### Linear Classification
+```python
+# Switch to DisCo directory
+cd DisCo
 
-With a pre-trained model, to train a supervised linear classifier on frozen features/weights in an 8-gpu machine, run:
-```
-python main_lincls.py \
-  -a resnet50 \
-  --lr 30.0 \
-  --batch-size 256 \
-  --pretrained [your checkpoint path]/checkpoint_0199.pth.tar \
-  --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 \
-  [your imagenet-folder with train and val folders]
+# R-50 & Effib0
+python3 -u main.py -a efficientb0 --lr 0.03 --batch-size 256 --moco-t 0.2 --aug-plus --dist-url 'tcp://localhost:10043' --multiprocessing-distributed --world-size 1 --rank 0 --mlp --cos --teacher_arch resnet50 --teacher /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm/ 2>&1 | tee ./logs/std.log
+#          Evaluation
+python3 -u main_lincls.py -a efficientb0 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
+
+# R50w2 & Effib0
+python3 -u main.py -a efficientb0 --lr 0.03 --batch-size 256 --moco-t 0.2 --aug-plus --dist-url 'tcp://localhost:10043' --multiprocessing-distributed --world-size 1 --rank 0 --mlp --cos --teacher_arch resnet50w2 --teacher /path/to/swav_RN50w2_400ep_pretrain.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
+#          Evaluation
+python3 yt_main_lincls.py -a resnet18 --learning-rate 30.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar  /dev/shm 2>&1 | tee ./logs/std.log
 ```
 
-Linear classification results on ImageNet using this repo with 8 NVIDIA V100 GPUs :
-<table><tbody>
-<!-- START TABLE -->
-<!-- TABLE HEADER -->
-<th valign="bottom"></th>
-<th valign="bottom">pre-train<br/>epochs</th>
-<th valign="bottom">pre-train<br/>time</th>
-<th valign="bottom">MoCo v1<br/>top-1 acc.</th>
-<th valign="bottom">MoCo v2<br/>top-1 acc.</th>
-<!-- TABLE BODY -->
-<tr><td align="left">ResNet-50</td>
-<td align="center">200</td>
-<td align="center">53 hours</td>
-<td align="center">60.8&plusmn;0.2</td>
-<td align="center">67.5&plusmn;0.1</td>
-</tr>
-</tbody></table>
+For **Tab2**, Linear evaluation top-1 accuracy (%) on ImageNet compared with **different distillation methods.**
 
-Here we run 5 trials (of pre-training and linear classification) and report mean&plusmn;std: the 5 results of MoCo v1 are {60.6, 60.6, 60.7, 60.9, 61.1}, and of MoCo v2 are {67.7, 67.6, 67.4, 67.6, 67.3}.
+```python
+# RKD+DisCo, Eff-b0
+python3 -u main_moco_distill_rkd.py -a efficientb0 --lr 0.03 --batch-size 256 --moco-t 0.2 --aug-plus --dist-url 'tcp://localhost:10043' --multiprocessing-distributed --world-size 1 --rank 0 --mlp --cos --teacher /path/to/teacher_res50.pth.tar --use-mse /dev/shm  2>&1 | tee ./logs/std.log
+#                  Evaluation
+python3 -u main_lincls.py -a efficientb0 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
 
+# RKD, Eff-b0
+python3 -u main_moco_distill_rkd.py -a efficientb0 --lr 0.03 --batch-size 256 --moco-t 0.2 --aug-plus --dist-url 'tcp://localhost:10043' --multiprocessing-distributed --world-size 1 --rank 0 --mlp --cos --teacher /path/to/teacher_res50.pth.tar /dev/shm  2>&1 | tee ./logs/std.log
+#                  Evaluation
+python3 -u main_lincls.py -a efficientb0 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
+```
 
-### Models
+For **Tab3** , **Object detection and instance segmentation results **
 
-Our pre-trained ResNet-50 models can be downloaded as following:
-<table><tbody>
-<!-- START TABLE -->
-<!-- TABLE HEADER -->
-<th valign="bottom"></th>
-<th valign="bottom">epochs</th>
-<th valign="bottom">mlp</th>
-<th valign="bottom">aug+</th>
-<th valign="bottom">cos</th>
-<th valign="bottom">top-1 acc.</th>
-<th valign="bottom">model</th>
-<th valign="bottom">md5</th>
-<!-- TABLE BODY -->
-<tr><td align="left"><a href="https://arxiv.org/abs/1911.05722">MoCo v1</a></td>
-<td align="center">200</td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center"></td>
-<td align="center">60.6</td>
-<td align="center"><a href="https://dl.fbaipublicfiles.com/moco/moco_checkpoints/moco_v1_200ep/moco_v1_200ep_pretrain.pth.tar">download</a></td>
-<td align="center"><tt>b251726a</tt></td>
-</tr>
-<tr><td align="left"><a href="https://arxiv.org/abs/2003.04297">MoCo v2</a></td>
-<td align="center">200</td>
-<td align="center">&#x2713</td>
-<td align="center">&#x2713</td>
-<td align="center">&#x2713</td>
-<td align="center">67.7</td>
-<td align="center"><a href="https://dl.fbaipublicfiles.com/moco/moco_checkpoints/moco_v2_200ep/moco_v2_200ep_pretrain.pth.tar">download</a></td>
-<td align="center"><tt>59fd9945</tt></td>
-</tr>
-<tr><td align="left"><a href="https://arxiv.org/abs/2003.04297">MoCo v2</a></td>
-<td align="center">800</td>
-<td align="center">&#x2713</td>
-<td align="center">&#x2713</td>
-<td align="center">&#x2713</td>
-<td align="center">71.1</td>
-<td align="center"><a href="https://dl.fbaipublicfiles.com/moco/moco_checkpoints/moco_v2_800ep/moco_v2_800ep_pretrain.pth.tar">download</a></td>
-<td align="center"><tt>a04e12f8</tt></td>
-</tr>
-</tbody></table>
+```python
+# Cp data to /dev/shm and set up path for Detectron2
+cp -r /path/to/VOCdevkit/* /dev/shm/
+cp -r /path/to/coco_2017 /dev/shm/coco
+export DETECTRON2_DATASETS=/dev/shm
+
+pip install /youtu-reid/jiaxzhuang/acmm/detectron2-0.4+cu101-cp36-cp36m-linux_x86_64.whl
+cd detection
+
+# Convert model for Detectron2
+python3 convert-pretrain-to-detectron2.py /path/ckpt/checkpoint_0199.pth.tar ./output.pkl
+
+# Evaluation on VOC
+python3 train_net.py --config-file configs/pascal_voc_R_50_C4_24k_moco.yaml --num-gpus 8 --resume MODEL.RESNETS.DEPTH 34 MODEL.RESNETS.RES2_OUT_CHANNELS 64 2>&1 | tee ../logs/std.log
+# Evaluation on CoCo
+python3 train_net.py --config-file configs/coco_R_50_C4_2x_moco.yaml --num-gpus 8  --resume MODEL.RESNETS.DEPTH 18 MODEL.RESNETS.RES2_OUT_CHANNELS 64 2>&1 | tee ../logs/std.log
+```
 
 
-### Transferring to Object Detection
 
-See [./detection](detection).
+For  **Fig5** , evaluation on **Semi-Supervised Tasks** 
+
+```python
+# Copy 1%, 10% ImageNet from the complete ImageNet, according to split from SimCLR.
+cd data
+# Need to set up path to Compelete ImageNet and the output path.
+python3 -u imagenet_1_fraction.py --ratio 1
+python3 -u imagenet_1_fraction.py --ratio 10
+
+# Evaluation on 1% ImageNet with Eff-B0 by DisCo
+cp -r /path/to/imagenet_1_fraction/train  /dev/shm
+cp -r /path/to/imagenet_1_fraction/val  /dev/shm/
+python3 -u main_lincls_semi.py -a efficientb0 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm  2>&1 | tee ./logs/std.log
+
+# Evaluation on 10% ImageNet with R-18 by DisCo
+cp -r /path/to/imagenet_10_fraction/train  /dev/shm
+cp -r /path/to/imagenet_10_fraction/val  /dev/shm/
+python3 -u main_lincls_semi.py -a resnet18 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm  2>&1 | tee ./logs/std.log
+```
+
+For Fig6, evaluation on **Cifar10/Cifar100**
+
+```python
+# Copy Cifar10/100 to /dev/shm
+cp /path/to/Cifar10/100 /dev/shm
+
+# Evaluation on 1% Cifar10 with Eff-B0 by DisCo
+python3 cifar_main_lincls.py -a efficientb0 --dataset cifar10 --lr 3 --epochs 200 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
+# Evaluation on  Cifar100 with Resnet18 by DisCo
+python3 cifar_main_lincls.py -a resnet18 --dataset cifar100 --lr 3 --epochs 200 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
+```
+
+For  **Tab4**, Linear evaluation top-1 accuracy (%) on ImageNet, compared with **SEED with consistent dimension in hidden layer**.
+
+```Python
+python3 -u main.py -a efficientb0 --lr 0.03 --batch-size 256 --moco-t 0.2 --aug-plus --dist-url 'tcp://localhost:10043' --multiprocessing-distributed --world-size 1 --rank 0 --mlp --cos --teacher_arch resnet50 --teacher /path/to/ckpt/checkpoint_0199.pth.tar --hidden 2048 /dev/shm/ 2>&1 | tee ./logs/std.log
+#          Evaluation
+python3 -u main_lincls.py -a efficientb0 --learning-rate 3.0 --batch-size 256 --dist-url 'tcp://localhost:10001' --multiprocessing-distributed --world-size 1 --rank 0 --pretrained /path/to/ckpt/checkpoint_0199.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
+```
+
+For **Tab5**, Linear evaluation top-1 accuracy (%) on ImageNet with SwAV as the testbed.
+
+```Python
+# SwAV, Train with SwAV only
+cd swav-master
+python3 -m torch.distributed.launch --nproc_per_node=8 main_swav.py \
+        --data_path /dev/shm/train \
+        --base_lr 0.6 \
+        --final_lr 0.0006 \
+        --warmup_epochs 0 \
+        --crops_for_assign 0 1 \
+        --size_crops 224 96 \
+        --nmb_crops 2 6 \
+        --min_scale_crops 0.14 0.05 \
+        --max_scale_crops 1. 0.14 \
+        --use_fp16 true \
+        --freeze_prototypes_niters 5005 \
+        --queue_length 3840 \
+        --epoch_queue_starts 15 \
+        --dump_path ./ckpt \
+        --sync_bn pytorch \
+        --temperature 0.1 \
+        --epsilon 0.05 \
+        --sinkhorn_iterations 3 \
+        --feat_dim 128 \
+        --nmb_prototypes 3000 \
+        --epochs 200 \
+        --batch_size 64 \
+        --wd 0.000001 \
+        --arch efficientb0 \
+        --use_fp16 true 2>&1 | tee ./logs/std.log
+# Evaluation
+python3 -m torch.distributed.launch --nproc_per_node=8 eval_linear.py --arch efficientb0 --data_path /dev/shm --pretrained /path/to/ckpt/checkpoints/ckp-199.pth 2>&1 | tee ./logs/std.log
+
+# DisCo + SwAV
+python3 -m torch.distributed.launch --nproc_per_node=8 main_swav_distill.py \
+        --data_path /dev/shm/train \
+        --base_lr 0.6 \
+        --final_lr 0.0006 \
+        --warmup_epochs 0 \
+        --crops_for_assign 0 1 \
+        --size_crops 224 96 \
+        --nmb_crops 2 6 \
+        --min_scale_crops 0.14 0.05 \
+        --max_scale_crops 1. 0.14 \
+        --use_fp16 true \
+        --freeze_prototypes_niters 5005 \
+        --queue_length 3840 \
+        --epoch_queue_starts 15 \
+        --dump_path ./ckpt \
+        --sync_bn pytorch \
+        --temperature 0.1 \
+        --epsilon 0.05 \
+        --sinkhorn_iterations 3 \
+        --feat_dim 128 \
+        --nmb_prototypes 3000 \
+        --epochs 200 \
+        --batch_size 64 \
+        --wd 0.000001 \
+        --arch efficientb0 \
+        --pretrained /path/to/swav_800ep_pretrain.pth.tar 2>&1 | tee ./logs/std.log
+```
+
+For **Tab6**, Linear evaluation top-1 accuracy (%) on ImageNet with variants of teacher pre-training methods.
+
+```Python
+
+# SwAV
+python3 -u main.py -a resnet34 --lr 0.03 --batch-size 256 --moco-t 0.2 --aug-plus --dist-url 'tcp://localhost:10043' --multiprocessing-distributed --world-size 1 --rank 0 --mlp --cos --teacher_arch SWAVresnet50 --teacher /path/to/swav_800ep_pretrain.pth.tar /dev/shm 2>&1 | tee ./logs/std.log
+```
+
+### Visualization
+
+```
+cd DisCo
+# Generate Embed
+# Move Embed to data path
+
+python -u draw.py
+```
+
+### BI Analysis
+
+code for BI is put on **data**
+
+------
 
 
-### License
 
-This project is under the CC-BY-NC 4.0 license. See [LICENSE](LICENSE) for details.
+## Checkpoints
 
-### See Also
-* [moco.tensorflow](https://github.com/ppwwyyxx/moco.tensorflow): A TensorFlow re-implementation.
-* [Colab notebook](https://colab.research.google.com/github/facebookresearch/moco/blob/colab-notebook/colab/moco_cifar10_demo.ipynb): CIFAR demo on Colab GPU.
+TO BE Released.
+
+
+
+## Recommendation Operations
+
+If memory of your machine is big enough to hold the whole datasets, I strongly encourage you to put that into memory, which can dramatically save IO time and speed up the programe.
+
+```
+cp /path/to/dataset /dev/shm
+```
+
+
+
+## Thanks
+
+Code heavily depends on MoCo-V2, Detectron2.
