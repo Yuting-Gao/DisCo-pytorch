@@ -1,4 +1,4 @@
-# Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning
+# DisCo: Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning
 
 
 Pytorch Implementation for [DisCo: Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning](https://arxiv.org/abs/2104.09124)
