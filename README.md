@@ -265,7 +265,15 @@ code for BI is put on **data**
 
 ## Checkpoints
 
-TO BE Released.
+TO BE Releasese...
+
+| Architecture | Self-supervised Methods | Model Checkpoints                                            |
+| :----------- | ----------------------- | ------------------------------------------------------------ |
+| ResNet152    | MoCo-V2                 | [Model](https://drive.google.com/file/d/1HwBJG16zCIQ1-ILa7cvGEAYaKlkWK3mG/view?usp=sharing) |
+| ResNet101    | MoCo-V2                 | [Model](https://drive.google.com/file/d/1gi6_qbr921hnyth6RIkZtzQOp8IYZ5Tb/view?usp=sharing) |
+| ResNet50     | MoCo-V2                 | [Model](https://drive.google.com/file/d/10eDoXeDgK4MlfjDDbV1R7n3uSPlzs-1q/view?usp=sharing) |
+
+For teacher models such as ResNet-50*2 etc, we use their official implementation, which can be downloaded from their github pages. 
 
 
 
