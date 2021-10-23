@@ -277,16 +277,6 @@ For teacher models such as ResNet-50*2 etc, we use their official implementation
 
 
 
-## Recommendation Operations
-
-If memory of your machine is big enough to hold the whole datasets, I strongly encourage you to put that into memory, which can dramatically save IO time and speed up the programe.
-
-```
-cp /path/to/dataset /dev/shm
-```
-
-
-
 ## Thanks
 
 Code heavily depends on MoCo-V2, Detectron2.
