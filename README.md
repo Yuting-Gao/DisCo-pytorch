@@ -10,7 +10,7 @@ Pytorch Implementation for [DisCo: Remedy Self-supervised Learning on Lightweigh
 ```
 @article{gao2021disco,
   title={DisCo: Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning},
-  author={Gao, Yuting and Zhuang, Jia-Xin and Li, Ke and Cheng, Hao and Guo, Xiaowei and Huang, Feiyue and Ji, Rongrong and Sun, Xing},
+  author={Yuting Gao, Jia-Xin Zhuang, Shaohui Lin, Hao Cheng, Xing Sun, Ke Li, Chunhua Shen},
   journal={arXiv preprint arXiv:2104.09124},
   year={2021}
 }
