@@ -1,4 +1,4 @@
-# DisCo: Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning(ECCV-2022)
+# DisCo: Remedy Self-supervised Learning on Lightweight Models with Distilled Contrastive Learning(ECCV-2022 Oral)
 
 
 
